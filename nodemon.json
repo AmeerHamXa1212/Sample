@@ -1,0 +1,7 @@
+{
+    "ext": "mjs",
+    "execMap": {
+      "mjs": "node --experimental-modules"
+    }
+  }
+  
