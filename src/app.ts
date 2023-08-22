@@ -2,11 +2,13 @@ import express from 'express';
 import { appConfig } from './config/config'
 import routes from './routes/index';
 import * as mongoose from 'mongoose'
+import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
 
 app.use(express.json());
 app.use(routes);
+app.use(errorHandler)
 
 mongoose.connect('mongodb://127.0.0.1:27017/HospitalAPI-ahk', {
   useNewUrlParser: true,
