@@ -233,7 +233,3 @@ export const getAppointmentFinancials = async (_req: Request, _res: Response) =>
         _res.status(500).json({ error: 'Internal server error' });
     }
 }
-
- 
-
-

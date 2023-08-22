@@ -59,4 +59,3 @@ const AppointmentSchema = new mongoose.Schema<IAppointments>({
     }
 })
 export default mongoose.model('appointmentCollection', AppointmentSchema);
-
