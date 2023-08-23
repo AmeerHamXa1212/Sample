@@ -29,9 +29,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const index_1 = __importDefault(require("./routes/index"));
 const mongoose = __importStar(require("mongoose"));
+const errorHandler_1 = require("./middleware/errorHandler");
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use(index_1.default);
+app.use(errorHandler_1.errorHandler);
 mongoose.connect('mongodb://127.0.0.1:27017/HospitalAPI-ahk', {
     useNewUrlParser: true,
     useUnifiedTopology: true,

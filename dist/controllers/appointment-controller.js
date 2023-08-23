@@ -4,62 +4,58 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAppointmentFinancials = exports.getAllAppointment = exports.getPopularPatient = exports.getRemainingBill = exports.getAppointmentsforDate = exports.getUnpaidAppointments = exports.addAppointmentToPatient = exports.deleteAppointment = exports.updateAppointment = exports.getAllAppointmentForPatient = void 0;
-const appointment_1 = __importDefault(require("../models/appointment"));
-const patient_1 = __importDefault(require("../models/patient"));
-const getAllAppointmentForPatient = async (_req, _res) => {
+const appointment_1 = __importDefault(require("../models/appointment")); // Import the model
+const patient_1 = __importDefault(require("../models/patient")); // Import the model
+//Definition of controller function for appointment
+const getAllAppointmentForPatient = async (req, res, next) => {
     try {
-        console.log(_req.params.patId);
-        const appointments = await appointment_1.default.find({ patientId: _req.params.patId }).populate('patientId');
+        const appointments = await appointment_1.default.find({ patientId: req.params.patId }).populate('patientId');
         if (!appointments) {
-            _res.json("Appointments not found");
-            _res.status(404);
-            return;
+            return next({ statusCode: 404, message: 'Appointments not found' });
         }
-        _res.status(200).json(appointments);
+        res.status(200).json(appointments);
     }
     catch (error) {
-        console.log(`Error in retrieving all appointments for patient with ${_req.params.patId}`, error);
-        _res.status(500).json({ error: 'Internal server error' });
+        console.log(`Error in retrieving all appointments for patient with ${req.params.patId}`, error);
+        next({ statusCode: 500, message: 'Internal server error' });
     }
 };
 exports.getAllAppointmentForPatient = getAllAppointmentForPatient;
-const updateAppointment = async (_req, _res) => {
+const updateAppointment = async (req, res, next) => {
     try {
-        const updatedPost = await appointment_1.default.findByIdAndUpdate(_req.params.appointId, _req.body, { new: true }).populate('patientId');
+        const updatedPost = await appointment_1.default.findByIdAndUpdate(req.params.appointId, req.body, { new: true }).populate('patientId');
         if (!updatedPost) {
-            _res.status(404).json({ error: 'Appointment not found' });
-            return;
+            return next({ statusCode: 404, message: 'Appointment not found' });
         }
-        _res.send(updatedPost);
-        console.log(`Appointment with id ${_req.params.appointId} Updated from DB`);
+        res.status(200).json(updatedPost);
     }
     catch (error) {
-        _res.status(500).json({ error: 'Internal server error' });
+        next({ statusCode: 500, message: 'Internal server error' });
     }
 };
 exports.updateAppointment = updateAppointment;
-const deleteAppointment = async (_req, _res) => {
+const deleteAppointment = async (_req, _res, _next) => {
     try {
         const deletedPost = await appointment_1.default.findByIdAndDelete(_req.params.appointId, _req.body).populate('patientId');
         if (!deletedPost) {
-            _res.status(404).json({ error: 'Appointment not found' });
-            return;
+            return _next({ statusCode: 404, message: 'Appointment not found' });
         }
         _res.json({ message: 'Appointment deleted successfully' });
         console.log(`Appointment with id ${_req.params.appointId} Deleted from DB`);
     }
     catch (error) {
-        _res.status(500).json({ error: 'Internal server error' });
+        return _next({ statusCode: 500, message: 'Internal Server Error' });
     }
 };
 exports.deleteAppointment = deleteAppointment;
-const addAppointmentToPatient = async (_req, _res) => {
+const addAppointmentToPatient = async (_req, _res, _next) => {
     try {
-        console.log('Request Body:', _req.body);
+        console.log('Request Body:', _req.body); // Add this line
         const { patientId, ...appointmentData } = _req.body;
+        // Check patient with  ID exists
         const existingPatient = await patient_1.default.findById(patientId);
         if (!existingPatient) {
-            return _res.status(404).json({ error: 'Patient not found' });
+            return _next({ statusCode: 404, message: 'PatientNot found' });
         }
         const newAppointment = new appointment_1.default({
             ...appointmentData,
@@ -71,81 +67,86 @@ const addAppointmentToPatient = async (_req, _res) => {
     }
     catch (error) {
         console.log('Error in adding appointment:', error);
-        _res.status(500).json({ error: 'Internal server error' });
+        return _next({ statusCode: 500, message: 'Internal Server Error' });
     }
 };
 exports.addAppointmentToPatient = addAppointmentToPatient;
-const getUnpaidAppointments = async (_req, _res) => {
+const getUnpaidAppointments = async (_req, _res, _next) => {
     try {
         const unpaidAppointments = await appointment_1.default.find({ isPaid: false });
         if (unpaidAppointments.length === 0) {
-            _res.status(404).json("There is no unpaid appointment");
-            return;
+            return _next({ statusCode: 404, message: 'No Unpaid Appointment' });
         }
         console.log("Fetching Unpaid Appointments");
         _res.status(201).json(unpaidAppointments);
     }
     catch (error) {
         console.log('Error in finding unpaid appointment:', error);
-        _res.status(500).json({ error: 'Internal server error' });
+        return _next({ statusCode: 500, message: 'Internal Server Error' });
     }
 };
 exports.getUnpaidAppointments = getUnpaidAppointments;
-const getAppointmentsforDate = async (_req, _res) => {
+const getAppointmentsforDate = async (_req, _res, _next) => {
     try {
         const requestedDate = new Date(_req.params.date);
         const startOfDay = new Date(requestedDate.getFullYear(), requestedDate.getMonth(), requestedDate.getDate());
         const endOfDay = new Date(startOfDay);
-        endOfDay.setHours(23, 59, 59, 999);
+        endOfDay.setHours(23, 59, 59, 999); // function to mark end of day
         const appointments = await appointment_1.default.find({ startTime: { $gte: startOfDay, $lte: endOfDay } });
         if (!appointments || appointments.length === 0) {
-            _res.status(404).json("There are no appointments for the given date");
-            return;
+            return _next({ statusCode: 404, message: 'No Appointments for given date' });
         }
         _res.status(200).json(appointments);
     }
     catch (err) {
         console.log(`Error in getting all appointments for date ${_req.params.date}`, err);
-        _res.status(500).json({ error: 'Internal server error' });
+        return _next({ statusCode: 500, message: 'Internal Server Error' });
     }
 };
 exports.getAppointmentsforDate = getAppointmentsforDate;
-const getRemainingBill = async (_req, _res) => {
+//get remaining bill of patient = bill amount of patients whose status is unpadi
+const getRemainingBill = async (_req, _res, _next) => {
     try {
         const unpaidSum = await appointment_1.default.aggregate([
+            //stage 1
             { $match: { isPaid: false } },
+            //stage 2
             { $group: { _id: null, total: { $sum: "$paymentAmount" } } }
         ]);
         if (!unpaidSum || unpaidSum.length === 0) {
-            _res.status(404).json("There are no unpaid appointments, therefore remaining bill is NULL");
-            return;
+            return _next({ statusCode: 404, message: 'No Unpaid Appointments, therefore RemainingBill = Null' });
         }
         _res.status(200).json(`Total Remaining Bill ${unpaidSum[0].total}`);
         console.log(`Total Unpaid Sum is := ${unpaidSum[0].total}`);
     }
     catch (error) {
         console.log(`Error in getting appointments with remaining Bill : ${error}`);
-        _res.status(500).json({ error: 'Internal server error' });
+        return _next({ statusCode: 500, message: 'Internal Server Error' });
     }
 };
 exports.getRemainingBill = getRemainingBill;
-const getPopularPatient = async (_req, _res) => {
+const getPopularPatient = async (_req, _res, _next) => {
     try {
         const popularPatient = await appointment_1.default.aggregate([
+            //stage 1
             { $match: { isPaid: true } },
+            //stage 2
             {
                 $group: {
                     _id: "$patientId", totalPayment: { $sum: "$paymentAmount" }
                 }
             },
+            //stage 3
             { $sort: { totalPayment: -1 } },
+            //stage 4
             { $limit: 1 },
+            //stage 5
             { $lookup: { from: "patientCollection", localField: "_id", foreignField: "_id", as: "patient" } },
+            //stage 6
             { $unwind: { path: "$patient", preserveNullAndEmptyArrays: true } }
         ]);
         if (!popularPatient || popularPatient.length === 0) {
-            _res.status(404).json("No Popular Patient found");
-            return;
+            return _next({ statusCode: 404, message: 'No Popular Patient Found' });
         }
         const popularPatientData = popularPatient[0];
         _res.status(200).json({
@@ -156,11 +157,11 @@ const getPopularPatient = async (_req, _res) => {
     }
     catch (error) {
         console.log(`Error in getting Popular patient : ${error}`);
-        _res.status(500).json({ error: 'Internal server error' });
+        return _next({ statusCode: 500, message: 'Internal Server Error' });
     }
 };
 exports.getPopularPatient = getPopularPatient;
-const getAllAppointment = async (_req, res) => {
+const getAllAppointment = async (_req, res, _next) => {
     console.log("getAllAppointment");
     try {
         const Appointment = await appointment_1.default.find();
@@ -168,11 +169,12 @@ const getAllAppointment = async (_req, res) => {
         console.log("Appointment Fetched from DB");
     }
     catch (error) {
-        res.status(500).json({ error: 'Internal server error' });
+        return _next({ statusCode: 500, message: 'Internal Server Error' });
     }
 };
 exports.getAllAppointment = getAllAppointment;
-const getAppointmentFinancials = async (_req, _res) => {
+//paid and unpaid
+const getAppointmentFinancials = async (_req, _res, _next) => {
     try {
         const result = await appointment_1.default.aggregate([
             {
@@ -184,11 +186,13 @@ const getAppointmentFinancials = async (_req, _res) => {
                     },
                     paidAmount: {
                         $sum: {
+                            //if cond evaluate to TRUE sum is done on PaymentAmount else sum is done on 0
                             $cond: [{ $eq: ['$isPaid', true] }, '$paymentAmount', 0]
                         }
                     },
                     unpaidAmount: {
                         $sum: {
+                            //if cond evaluate to TRUE sum is done on PaymentAmount else sum is done on 0
                             $cond: [{ $eq: ['$isPaid', false] }, '$paymentAmount', 0]
                         }
                     }
@@ -202,15 +206,14 @@ const getAppointmentFinancials = async (_req, _res) => {
             }
         ]);
         if (!result || result.length === 0) {
-            _res.status(404).json("No financial data found");
-            return;
+            return _next({ statusCode: 404, message: 'No financial data found' });
         }
         console.log("Generating financial report of all Appointments");
         _res.status(200).json(result);
     }
     catch (error) {
         console.log(`Error in getting financial report: ${error}`);
-        _res.status(500).json({ error: 'Internal server error' });
+        return _next({ statusCode: 500, message: 'Internal Server Error' });
     }
 };
 exports.getAppointmentFinancials = getAppointmentFinancials;

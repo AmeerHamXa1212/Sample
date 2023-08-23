@@ -1,6 +1,6 @@
 import mongoose,{Schema,Model,Document} from "mongoose";
 
-enum PaymentType {
+export enum PaymentType {
     usd = "USD",
     eur = "EUR",
     bitcoin = "BITCOIN"
@@ -17,7 +17,7 @@ export interface IAppointments extends Document {
 
 }
 
-const AppointmentSchema = new mongoose.Schema<IAppointments>({
+export const AppointmentSchema = new mongoose.Schema<IAppointments>({
     startTime:{
         type:Date,
         required:[true,"Appointment Start Time is Required"]

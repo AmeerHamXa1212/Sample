@@ -8,6 +8,8 @@ const config_1 = require("./config/config");
 const mongoose_1 = __importDefault(require("mongoose"));
 const port = config_1.appConfig.port;
 mongoose_1.default.set('strictQuery', true);
+//console.log(`This is my database url : ${appConfig.databaseURL}`)
 const server = app_1.default.listen(port, () => {
+    //console.log(`This is my database url : ${appConfig.databaseURL}`)
     console.log(`Server is running at http://localhost:${port}`);
 });

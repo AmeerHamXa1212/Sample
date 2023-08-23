@@ -18,7 +18,7 @@ export const createPatient = async (_req: Request, res: Response, _next: NextFun
     const newPatient = await PatientModel.create(_req.body);
     res.status(201).send(newPatient);
     console.log("New Patient Added");
-  } catch (error) {
+  } catch (error:any) {
     _next({ statusCode: 400, message: error.message });
   }
 };
