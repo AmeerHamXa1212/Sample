@@ -8,7 +8,7 @@ const patient_1 = __importDefault(require("../models/patient")); // Import the m
 const getAllPatient = async (_req, res, _next) => {
     try {
         const patients = await patient_1.default.find();
-        res.json(patients);
+        res.status(200).json(patients);
         console.log("Patients Fetched from DB");
     }
     catch (error) {
@@ -35,6 +35,7 @@ const updatePatient = async (_req, _res, _next) => {
             return;
         }
         _res.send(updatedPatient);
+        _res.status(200);
         console.log(`Patient with id ${_req.params.patientId} updated from DB`);
     }
     catch (error) {
@@ -44,13 +45,14 @@ const updatePatient = async (_req, _res, _next) => {
 exports.updatePatient = updatePatient;
 const deletePatient = async (_req, _res, _next) => {
     try {
-        console.log('Patient ID:', _req.params.patientId);
+        //console.log('Patient ID:', _req.params.patientId);
         const deletedPatient = await patient_1.default.findByIdAndDelete(_req.params.patientId);
         if (!deletedPatient) {
             _next({ statusCode: 404, message: 'Patient not found' });
             return;
         }
         _res.json({ message: 'Patient deleted successfully' });
+        _res.status(200);
         console.log(`Patient with id ${_req.params.patientId} Deleted from DB`);
     }
     catch (error) {

@@ -162,11 +162,9 @@ const getPopularPatient = async (_req, _res, _next) => {
 };
 exports.getPopularPatient = getPopularPatient;
 const getAllAppointment = async (_req, res, _next) => {
-    console.log("getAllAppointment");
     try {
         const Appointment = await appointment_1.default.find();
-        res.json(Appointment);
-        console.log("Appointment Fetched from DB");
+        res.status(200).json(Appointment);
     }
     catch (error) {
         return _next({ statusCode: 500, message: 'Internal Server Error' });

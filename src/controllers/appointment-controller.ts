@@ -43,8 +43,6 @@ export const deleteAppointment =async (_req:Request,_res:Response,_next:NextFunc
         ).populate('patientId');
         if (!deletedPost) {
             return _next({ statusCode: 404, message: 'Appointment not found' });
-
-        
         }
         _res.json({ message: 'Appointment deleted successfully' });
         console.log(`Appointment with id ${_req.params.appointId} Deleted from DB`)
@@ -75,7 +73,6 @@ export const addAppointmentToPatient = async (_req: Request, _res: Response,_nex
         return _next({ statusCode: 500, message: 'Internal Server Error' });
     }
 };
-
 export const getUnpaidAppointments =async (_req:Request,_res:Response,_next:NextFunction) => {
     try{
         const unpaidAppointments = await AppointmentModel.find({isPaid:false})
@@ -169,12 +166,10 @@ export const getPopularPatient = async (_req: Request, _res: Response,_next:Next
     }
 }
 
-export const getAllAppointment = async (_req: Request, res: Response,_next:NextFunction) => {
-    console.log("getAllAppointment");
+export const getAllAppointment = async (_req: Request, res: Response, _next:NextFunction) => {
      try {
          const Appointment = await AppointmentModel.find();
-         res.json(Appointment);
-         console.log("Appointment Fetched from DB")
+         res.status(200).json(Appointment);
      } 
      catch (error) {
         return _next({ statusCode: 500, message: 'Internal Server Error' });

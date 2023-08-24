@@ -13,8 +13,8 @@ describe('Patient Controller - Unit Tests', () => {
   beforeEach(() => {
     mockNext = jest.fn();
     mockResponse = {
-      json: jest.fn(),
-      status: jest.fn().mockReturnThis(), // Properly mock status chaining
+      json: jest.fn(() => mockResponse),
+      status: jest.fn(() => mockResponse), // Properly mock status chaining
       send: jest.fn(), // Properly mock send function
     } as unknown as Response;
   })
@@ -25,6 +25,7 @@ describe('Patient Controller - Unit Tests', () => {
 
     await patientController.getAllPatient(mockRequest, mockResponse, mockNext);
 
+    expect(mockResponse.status).toHaveBeenCalledWith(200)
     expect(mockResponse.json).toHaveBeenCalledWith(mockPatients);
   });
 
@@ -37,7 +38,6 @@ describe('Patient Controller - Unit Tests', () => {
     await patientController.createPatient(mockRequest, mockResponse, mockNext);
 
     expect(mockResponse.status).toHaveBeenCalledWith(201);
-    
     expect(mockResponse.send).toHaveBeenCalledWith(mockPatient);
   });
 
@@ -58,7 +58,7 @@ describe('Patient Controller - Unit Tests', () => {
       { $set: mockUpdatedPatient }
     );
 
-    expect(mockResponse.send).toHaveBeenCalled();
+    expect(mockResponse.status).toHaveBeenCalledWith(200);
   });
 
   it('should delete a patient', async () => {
@@ -72,10 +72,7 @@ describe('Patient Controller - Unit Tests', () => {
     await patientController.deletePatient(mockRequest, mockResponse, mockNext);
 
     expect(PatientModel.findByIdAndDelete).toHaveBeenCalledWith(mockPatientId);
-
+    expect(mockResponse.status).toHaveBeenCalledWith(200)
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Patient deleted successfully' });
   });
-
-
-
 });

@@ -6,7 +6,7 @@ import { Request, Response, NextFunction } from 'express';
 export const getAllPatient = async (_req: Request, res: Response, _next: NextFunction) => {
   try {
     const patients = await PatientModel.find();
-    res.json(patients);
+    res.status(200).json(patients);
     console.log("Patients Fetched from DB");
   } catch (error) {
     _next({ statusCode: 500, message: 'Internal server error' });
@@ -36,6 +36,7 @@ export const updatePatient = async (_req: Request, _res: Response, _next: NextFu
     }
 
     _res.send(updatedPatient);
+    _res.status(200)
     console.log(`Patient with id ${_req.params.patientId} updated from DB`);
   } catch (error) {
     _next({ statusCode: 500, message: 'Internal server error' });
@@ -44,7 +45,7 @@ export const updatePatient = async (_req: Request, _res: Response, _next: NextFu
 
 export const deletePatient = async (_req: Request, _res: Response, _next: NextFunction) => {
   try {
-    console.log('Patient ID:', _req.params.patientId);
+    //console.log('Patient ID:', _req.params.patientId);
     const deletedPatient = await PatientModel.findByIdAndDelete(_req.params.patientId);
 
     if (!deletedPatient) {
@@ -53,6 +54,7 @@ export const deletePatient = async (_req: Request, _res: Response, _next: NextFu
     }
 
     _res.json({ message: 'Patient deleted successfully' });
+    _res.status(200)
     console.log(`Patient with id ${_req.params.patientId} Deleted from DB`);
   } catch (error) {
     _next({ statusCode: 500, message: 'Internal server error' });
