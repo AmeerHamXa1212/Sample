@@ -1,62 +1,83 @@
-import { IPatient } from '../models/patient'; // Import the interface
-import PatientModel from '../models/patient'; // Import the model
-
-import { Request, Response, NextFunction } from 'express';
-
-export const getAllPatient = async (_req: Request, res: Response, _next: NextFunction) => {
+import { IPatient } from "../models/patient"; // Import the interface
+import PatientModel from "../models/patient"; // Import the model
+import { Request, Response, NextFunction } from "express";
+import { validateNull } from "../helper/nullCheck";
+export const getAllPatient = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const patients = await PatientModel.find();
+
+    if (patients.length === 0) {
+      return next({ statusCode: 404, message: "No Patient in DB" });
+    }
+
     res.status(200).json(patients);
-    console.log("Patients Fetched from DB");
-  } catch (error) {
-    _next({ statusCode: 500, message: 'Internal server error' });
+  } catch (error: any) {
+    console.log(`Error fetching patients: ${error}`);
+    next({ statusCode: 500, message: "Internal server error" });
   }
 };
 
-export const createPatient = async (_req: Request, res: Response, _next: NextFunction) => {
+export const createPatient = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const newPatient = await PatientModel.create(_req.body);
+    const newPatient = await PatientModel.create(req.body);
+    // if (
+    //   !newPatient.petName ||
+    //   !newPatient.ownerName ||
+    //   !newPatient.ownerPhone ||
+    //   !newPatient.ownerAddress ||
+    //   !newPatient.petType
+    // ) {
+    //   return next({ statusCode: 400, message: "Bad Request" });
+    // }
     res.status(201).send(newPatient);
-    console.log("New Patient Added");
-  } catch (error:any) {
-    _next({ statusCode: 400, message: error.message });
+  } catch (error: any) {
+    next({ statusCode: 500, message: "Internal Server Error" });
   }
 };
-
-export const updatePatient = async (_req: Request, _res: Response, _next: NextFunction) => {
+export const updatePatient = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const updatedPatient = await PatientModel.updateOne(
-      { _id: _req.params.patientId },
-      { $set: _req.body }
+      { _id: req.params.patientId },
+      { $set: req.body }
     );
-
+    //validateNull(updatedPatient, "Bad Request", 400);
     if (!updatedPatient) {
-      _next({ statusCode: 404, message: 'Patient not found' });
+      next({ statusCode: 404, message: "Patient not found" });
       return;
     }
-
-    _res.send(updatedPatient);
-    _res.status(200)
-    console.log(`Patient with id ${_req.params.patientId} updated from DB`);
+    res.send(updatedPatient);
+    res.status(200);
   } catch (error) {
-    _next({ statusCode: 500, message: 'Internal server error' });
+    next({ statusCode: 500, message: "Internal server error" });
   }
 };
-
-export const deletePatient = async (_req: Request, _res: Response, _next: NextFunction) => {
+export const deletePatient = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    //console.log('Patient ID:', _req.params.patientId);
-    const deletedPatient = await PatientModel.findByIdAndDelete(_req.params.patientId);
-
+    const deletedPatient = await PatientModel.findByIdAndDelete(
+      req.params.patientId
+    );
+    //validateNull(deletePatient, "Patient not found", 404);
     if (!deletedPatient) {
-      _next({ statusCode: 404, message: 'Patient not found' });
-      return;
+      return next({ statusCode: 404, message: "Patient not found" });
     }
-
-    _res.json({ message: 'Patient deleted successfully' });
-    _res.status(200)
-    console.log(`Patient with id ${_req.params.patientId} Deleted from DB`);
+    res.status(200).json({ message: "Patient deleted successfully" });
   } catch (error) {
-    _next({ statusCode: 500, message: 'Internal server error' });
+    next({ statusCode: 500, message: "Internal server error" });
   }
 };

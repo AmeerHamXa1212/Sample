@@ -1,64 +1,169 @@
-// import { Request, Response, NextFunction } from 'express';
-// import * as appointmentController from '../controllers/appointment-controller';
-// import appointmentModel, { IAppointments } from '../models/appointment';
-// import mongoose from 'mongoose'
+import { Request, Response, NextFunction } from "express";
+import * as appointmentController from "../controllers/appointment-controller";
+import appointmentModel, { IAppointments } from "../models/appointment";
+import mongoose from "mongoose";
+import PatientModel from "../models/patient";
+import { EPaymentType } from "../models/appointment";
 
-// //step1 - mock db
-// jest.mock('../models/appointment')
-// describe("Appointment Controller Testing - Unit Test",()=>{
-//     let mockRequest = {} as Request;
-//     let mockResponse: Response;
-//     let mockNext: NextFunction;
-  
-//     beforeEach(() => {
-//       mockNext = jest.fn();
-//       mockResponse = {
-//         json: jest.fn(() => mockResponse),
-//         status: jest.fn(() => mockResponse), // Properly mock status chaining
-//         send: jest.fn(), // Properly mock send function
-//       } as unknown as Response;
-//     })
+jest.mock("../models/appointment");
+jest.mock("../models/patient");
+describe("Appointment Controller - Unit Test", () => {
+  let mockRequest = {} as Request;
+  let mockResponse: Response;
+  let mockNext: NextFunction;
 
-//     it("should get all appointments", async () => {
-//         const mockAppointment = [{appointmentId: 1, paymentAmount: 100, isPaid: true, patientId: 123}];
-        
-//         // Mock the implementation of appointmentModel.find
-//         appointmentModel.find = jest.fn().mockResolvedValue(mockAppointment)
-    
-//         // Call the controller function
-//         await appointmentController.getAllAppointment(mockRequest, mockResponse, mockNext);
-    
-//         // Expectations
-//         // expect(controllerAppointments).toEqual(mockAppointment); // Assuming the return format matches
-//         expect(appointmentModel.find).toHaveBeenCalled()
-//         expect(mockResponse.json).toHaveBeenCalledWith(mockAppointment)
-//         expect(mockResponse.status).toHaveBeenCalledWith(200);
+  beforeEach(() => {
+    mockNext = jest.fn();
+    mockResponse = {
+      json: jest.fn(() => mockResponse),
+      status: jest.fn(() => mockResponse),
+      send: jest.fn(),
+    } as unknown as Response;
+  });
+  jest.clearAllMocks();
 
-//     });
-    
-//     it('should create new appointment', async () => {
-//         // Mocked appointment data
-//         const mockRequest = {
-//             params: {
-//                 patId: 'patientId1',
-//             },
-//         } as unknown as Request;
-        
-//         mockRequest.body = {
-//             startTime: new Date(),
-//             endTime: new Date(),
-//             description: 'Mock appointment description',
-//             patientId: new mongoose.Types.ObjectId(), // Generate a new ObjectId
-//             isPaid: true,
-//             paymentAmount: 10
-//         };
-//         const mockAppointment = mockRequest.body
-//         //await appointmentModel.findById(mockRequest.body.patientId)
-//         console.log(mockResponse.status)
-//         expect(appointmentModel.findById).toHaveBeenCalled();
-//         //expect(mockResponse.status).toHaveBeenCalledWith(200);
+  it("should get all appointments", async () => {
+    const mockAppointment = [
+      { appointmentId: 1, paymentAmount: 100, isPaid: true, patientId: 123 },
+    ];
+    appointmentModel.find = jest.fn().mockResolvedValue(mockAppointment);
 
-//         //expect(mockResponse.json).toHaveBeenCalledWith(mockAppointment);
-//     }); // This sets the timeout for this specific test case to 10000ms
-    
-// })
+    await appointmentController.getAllAppointment(
+      mockRequest,
+      mockResponse,
+      mockNext
+    );
+    expect(appointmentModel.find).toHaveBeenCalled();
+    expect(mockResponse.json).toHaveBeenCalledWith(mockAppointment);
+    expect(mockResponse.status).toHaveBeenCalledWith(200);
+  });
+
+  it("should retrieve unpaid appointments", async () => {
+    const mockAppointment = [
+      { appointmentId: 1, paymentAmount: 100, isPaid: false, patientId: 123 },
+    ];
+
+    appointmentModel.find = jest.fn().mockResolvedValue(mockAppointment);
+    const mockRequest = {} as Request;
+    const mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as unknown as Response; //as unknown as Response;
+    const mockNext: NextFunction = jest.fn();
+    await appointmentController.getUnpaidAppointments(
+      mockRequest,
+      mockResponse,
+      mockNext
+    );
+    expect(appointmentModel.find).toHaveBeenCalledWith({ isPaid: false });
+    expect(mockResponse.status).toHaveBeenCalledWith(200);
+  });
+
+  it("should retrieve failed unpaid appointments", async () => {
+    const mockAppointment: any = [];
+    appointmentModel.find = jest.fn().mockResolvedValue(mockAppointment);
+
+    const mockRequest = {} as Request;
+    const mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as unknown as Response;
+    const mockNext: NextFunction = jest.fn();
+
+    await appointmentController.getUnpaidAppointments(
+      mockRequest,
+      mockResponse,
+      mockNext
+    );
+    expect(mockNext).toHaveBeenCalledWith({
+      statusCode: 404,
+      message: "No Unpaid Appointment",
+    });
+  });
+
+  it("should add new appointment to patient", async () => {
+    mockRequest = {
+      body: {
+        startTime: new Date(),
+        endTime: new Date(),
+        description: "Mock appointment description",
+        patientId: "mockPatientId",
+        isPaid: true,
+        paymentAmount: 10,
+      },
+    } as unknown as Request;
+    PatientModel.findById = jest.fn().mockResolvedValue({
+      _id: "mockPatientId",
+      petName: "Mock Pet",
+    });
+    const mockSavedAppointment = {
+      _id: "mockAppointmentId",
+      ...mockRequest.body,
+    };
+    const saveMock = jest.fn().mockResolvedValue(mockSavedAppointment);
+    appointmentModel.prototype.save = saveMock;
+    await appointmentController.addAppointmentToPatient(
+      mockRequest,
+      mockResponse,
+      mockNext
+    );
+    expect(PatientModel.findById).toHaveBeenCalledWith("mockPatientId");
+    expect(saveMock).toHaveBeenCalled();
+    expect(mockResponse.status).toHaveBeenCalledWith(201);
+    expect(mockResponse.json).toHaveBeenCalledWith(mockSavedAppointment);
+  });
+
+  it("should retrieve appointments for a given date", async () => {
+    const mockAppointments = [
+      {
+        _id: new mongoose.Types.ObjectId(),
+        startTime: new Date("2023-08-24T10:00:00Z"),
+        endTime: new Date("2023-08-24T11:00:00Z"),
+        description: "Mock appointment 1",
+        paymentMethod: "USD",
+        isPaid: true,
+        paymentAmount: 100,
+      },
+      {
+        _id: new mongoose.Types.ObjectId(),
+        startTime: new Date("2023-08-24T14:00:00Z"),
+        endTime: new Date("2023-08-24T15:00:00Z"),
+        description: "Mock appointment 2",
+        paymentMethod: "EUR",
+        isPaid: false,
+        paymentAmount: 75,
+      },
+    ];
+
+    const mockRequestedDate = new Date("2023-08-24");
+    const mockStartOfDay = new Date(2023, 8, 24);
+    const mockEndOfDay = new Date(2023, 8, 24, 23, 59, 59, 999);
+
+    appointmentModel.find = jest.fn().mockResolvedValue(mockAppointments);
+
+    const mockRequest = {
+      params: {
+        date: "2023-08-24",
+      },
+    } as unknown as Request;
+
+    const mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as unknown as Response;
+    const mockNext = jest.fn() as NextFunction;
+
+    await appointmentController.getAppointmentsforDate(
+      mockRequest,
+      mockResponse,
+      mockNext
+    );
+
+    expect(appointmentModel.find).toHaveBeenCalledWith({
+      startTime: { $gte: mockStartOfDay, $lte: mockEndOfDay },
+    });
+    expect(mockResponse.status).toHaveBeenCalledWith(200);
+    expect(mockResponse.json).toHaveBeenCalledWith(mockAppointments);
+    expect(mockNext).not.toHaveBeenCalled();
+  });
+});
