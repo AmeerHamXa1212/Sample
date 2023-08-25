@@ -18,10 +18,6 @@ export const getAllAppointmentForPatient = async (
     }
     res.status(200).json(appointments);
   } catch (error) {
-    // console.log(
-    //   `Error in retrieving all appointments for patient with ${req.params.patId}`,
-    //   error
-    // );
     next({ statusCode: 500, message: "Internal server error" });
   }
 };
@@ -59,7 +55,6 @@ export const deleteAppointment = async (
       return next({ statusCode: 404, message: "Appointment not found" });
     }
     res.status(200).json({ message: "Appointment deleted successfully" });
-    // console.log(`Appointment with id ${req.params.appointId} Deleted from DB`);
   } catch (error) {
     return next({ statusCode: 500, message: "Internal Server Error" });
   }
@@ -82,16 +77,11 @@ export const addAppointmentToPatient = async (
     });
     const savedAppointment = await newAppointment.save();
     if (savedAppointment) {
-      //   console.log(
-      //     `Appointment with id ${savedAppointment._id} added to patient with id ${savedAppointment.patientId}`
-      //   );
       res.status(201).json(savedAppointment);
     } else {
-      //console.log("Error saving appointment");
       return next({ statusCode: 400, message: "Saved Appointment failed" });
     }
   } catch (error) {
-    //console.log("Error in adding appointment:", error);
     return next({ statusCode: 500, message: "Internal Server Error" });
   }
 };
@@ -105,10 +95,8 @@ export const getUnpaidAppointments = async (
     if (unpaidAppointments.length === 0) {
       return next({ statusCode: 404, message: "No Unpaid Appointment" });
     }
-    // console.log("Fetching Unpaid Appointments");
     res.status(200).json(unpaidAppointments);
   } catch (error) {
-    //console.log("Error in finding unpaid appointment:", error);
     return next({ statusCode: 500, message: "Internal Server Error" });
   }
 };
@@ -162,9 +150,7 @@ export const getRemainingBill = async (
       });
     }
     res.status(200).json(`Total Remaining Bill ${unpaidSum[0].total}`);
-    //console.log(`Total Unpaid Sum is := ${unpaidSum[0].total}`);
   } catch (error) {
-    //console.log(`Error in getting appointments with remaining Bill : ${error}`);
     return next({ statusCode: 500, message: "Internal Server Error" });
   }
 };
@@ -204,11 +190,7 @@ export const getPopularPatient = async (
       patient: popularPatientData._id,
       totalPayment: popularPatientData.totalPayment,
     });
-    // console.log(
-    //   `Popular Patient in the DB is : ${popularPatient[0]._id} and its payment is ${popularPatientData.totalPayment} `
-    // );
   } catch (error) {
-    //console.log(`Error in getting Popular patient : ${error}`);
     return next({ statusCode: 500, message: "Internal Server Error" });
   }
 };
@@ -269,10 +251,8 @@ export const getAppointmentFinancials = async (
     if (!result || result.length === 0) {
       return next({ statusCode: 404, message: "No financial data found" });
     }
-    //console.log("Generating financial report of all Appointments");
     res.status(200).json(result);
   } catch (error) {
-    //console.log(`Error in getting financial report: ${error}`);
     return next({ statusCode: 500, message: "Internal Server Error" });
   }
 };
