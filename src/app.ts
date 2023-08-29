@@ -11,7 +11,7 @@ app.use(routes);
 app.use(errorHandler);
 
 mongoose
-  .connect("mongodb://127.0.0.1:27017/HospitalAPI-ahk", {
+  .connect(appConfig.databaseURL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   } as mongoose.ConnectOptions)

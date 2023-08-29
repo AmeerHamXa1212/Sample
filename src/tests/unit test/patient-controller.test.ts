@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import * as patientController from "../controllers/patient-controller";
-import PatientModel from "../models/patient";
+import * as patientController from "../../controllers/patient-controller";
+import PatientModel from "../../models/patient";
 
 jest.mock("../models/patient");
 

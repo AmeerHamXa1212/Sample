@@ -1,11 +1,6 @@
-export function validateNull(
-  object: any,
-  message: string,
-  statusCode: number
-): void {
-  if (!object) {
-    const error = new Error(message);
-    (error as any).statusCode = statusCode;
-    throw error;
+export function validateNull<T extends Array<any>>(object: T): boolean {
+  if (!object || object.length === 0) {
+    return true;
   }
+  return false;
 }

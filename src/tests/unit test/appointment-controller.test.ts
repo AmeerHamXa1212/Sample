@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import * as appointmentController from "../controllers/appointment-controller";
-import appointmentModel, { IAppointments } from "../models/appointment";
+import * as appointmentController from "../../controllers/appointment-controller";
+import appointmentModel, { IAppointments } from "../../models/appointment";
 import mongoose from "mongoose";
-import PatientModel from "../models/patient";
-import { EPaymentType } from "../models/appointment";
+import PatientModel from "../../models/patient";
+import { EPaymentType } from "../../models/appointment";
 
 jest.mock("../models/appointment");
 jest.mock("../models/patient");
@@ -117,8 +117,8 @@ describe("Appointment Controller - Unit Test", () => {
     const mockAppointments = [
       {
         _id: new mongoose.Types.ObjectId(),
-        startTime: new Date("2023-08-24T10:00:00Z"),
-        endTime: new Date("2023-08-24T11:00:00Z"),
+        startTime: new Date("2023-07-24T10:00:00Z"),
+        endTime: new Date("2023-07-24T11:00:00Z"),
         description: "Mock appointment 1",
         paymentMethod: "USD",
         isPaid: true,

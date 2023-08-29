@@ -9,7 +9,7 @@ export const getAllPatient = async (
 ) => {
   try {
     const patients = await PatientModel.find();
-
+    console.log(patients);
     if (patients.length === 0) {
       return next({ statusCode: 404, message: "No Patient in DB" });
     }

@@ -56,6 +56,7 @@ export const deleteAppointment = async (
     }
     res.status(200).json({ message: "Appointment deleted successfully" });
   } catch (error) {
+    //console.error("Error deleting appointment:", error);
     return next({ statusCode: 500, message: "Internal Server Error" });
   }
 };
@@ -76,11 +77,11 @@ export const addAppointmentToPatient = async (
       patientId: existingPatient._id,
     });
     const savedAppointment = await newAppointment.save();
-    if (savedAppointment) {
-      res.status(201).json(savedAppointment);
-    } else {
+    console.log(savedAppointment);
+    if (!savedAppointment) {
       return next({ statusCode: 400, message: "Saved Appointment failed" });
     }
+    res.status(201).json(savedAppointment);
   } catch (error) {
     return next({ statusCode: 500, message: "Internal Server Error" });
   }
@@ -202,10 +203,15 @@ export const getAllAppointment = async (
 ) => {
   try {
     const Appointment = await AppointmentModel.find();
+
+    if (!Appointment || Appointment.length === 0) {
+      return next({ statusCode: 404, message: "No Appointment Available" });
+    }
     res.status(200).json(Appointment);
   } catch (error) {
     return next({ statusCode: 500, message: "Internal Server Error" });
   }
+  (" ");
 };
 
 export const getAppointmentFinancials = async (
