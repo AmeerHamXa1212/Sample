@@ -27,16 +27,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const config_1 = require("./config/config");
 const index_1 = __importDefault(require("./routes/index"));
 const mongoose = __importStar(require("mongoose"));
+const dotenv = __importStar(require("dotenv"));
 const errorHandler_1 = require("./middleware/errorHandler");
 const app = (0, express_1.default)();
+dotenv.config();
+const databaseURL = process.env.dbUrl ||
+    "mongodb+srv://ameerhamza:ameerhamza11@cluster0.e99r2go.mongodb.net/";
+const port = process.env.port || 5500;
 app.use(express_1.default.json());
 app.use(index_1.default);
 app.use(errorHandler_1.errorHandler);
 mongoose
-    .connect(config_1.appConfig.databaseURL, {
+    .connect(databaseURL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })
