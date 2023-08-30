@@ -1,6 +1,5 @@
 {
   "builds": [
-    { "src": "dist/**/*", "use": "@vercel/node" }
-  ],
-  "exclude": ["test/**"]
+    { "src": "dist/index.js", "use": "@vercel/node" }
+  ]
 }
