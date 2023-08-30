@@ -1,13 +1,11 @@
-import { IPatient } from "../models/patient"; // Import the interface
-import PatientModel from "../models/patient"; // Import the model
 import { Request, Response, NextFunction } from "express";
-import { validateNull } from "../helper/nullCheck";
-export const getAllPatient = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
+import asyncHandler from "express-async-handler"; // Import express-async-handler
+import { IPatient } from "../models/patient";
+import PatientModel from "../models/patient";
+import mongoose from "mongoose";
+
+export const getAllPatient = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
     const patients = await PatientModel.find();
     console.log(patients);
     if (patients.length === 0) {
@@ -15,69 +13,62 @@ export const getAllPatient = async (
     }
 
     res.status(200).json(patients);
-  } catch (error: any) {
-    console.log(`Error fetching patients: ${error}`);
-    next({ statusCode: 500, message: "Internal server error" });
   }
-};
+);
 
-export const createPatient = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
+export const createPatient = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
     const newPatient = await PatientModel.create(req.body);
-    // if (
-    //   !newPatient.petName ||
-    //   !newPatient.ownerName ||
-    //   !newPatient.ownerPhone ||
-    //   !newPatient.ownerAddress ||
-    //   !newPatient.petType
-    // ) {
-    //   return next({ statusCode: 400, message: "Bad Request" });
-    // }
+    if (
+      !newPatient.petName ||
+      !newPatient.ownerName ||
+      !newPatient.ownerPhone ||
+      !newPatient.ownerAddress ||
+      !newPatient.petType
+    ) {
+      return next({ statusCode: 400, message: "Bad Request" });
+    }
     res.status(201).send(newPatient);
-  } catch (error: any) {
-    next({ statusCode: 500, message: "Internal Server Error" });
   }
-};
-export const updatePatient = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const updatedPatient = await PatientModel.updateOne(
-      { _id: req.params.patientId },
-      { $set: req.body }
+);
+
+export const updatePatient = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const patientId = req.params.patientId;
+
+    if (!mongoose.Types.ObjectId.isValid(patientId)) {
+      next({ statusCode: 400, message: "Invalid ObjectId format" });
+      return;
+    }
+
+    const updatedPatient = await PatientModel.findByIdAndUpdate(
+      patientId,
+      { $set: req.body },
+      { new: true } // Return the updated document
     );
-    //validateNull(updatedPatient, "Bad Request", 400);
+
     if (!updatedPatient) {
       next({ statusCode: 404, message: "Patient not found" });
       return;
     }
-    res.send(updatedPatient);
-    res.status(200);
-  } catch (error) {
-    next({ statusCode: 500, message: "Internal server error" });
+    res.status(200).json(updatedPatient);
   }
-};
-export const deletePatient = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
+);
+
+export const deletePatient = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const patientId = req.params.patientId;
+    if (!mongoose.Types.ObjectId.isValid(patientId)) {
+      next({ statusCode: 400, message: "Invalid ObjectId format" });
+      return;
+    }
+
     const deletedPatient = await PatientModel.findByIdAndDelete(
       req.params.patientId
     );
-    //validateNull(deletePatient, "Patient not found", 404);
     if (!deletedPatient) {
       return next({ statusCode: 404, message: "Patient not found" });
     }
     res.status(200).json({ message: "Patient deleted successfully" });
-  } catch (error) {
-    next({ statusCode: 500, message: "Internal server error" });
   }
-};
+);
