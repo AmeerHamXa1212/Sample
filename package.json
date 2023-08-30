@@ -6,7 +6,7 @@
   "scripts": {
     "start:dev": "nodemon ./src/index.ts",
     "build": "tsc -p .",
-    "start:prod": "node ./dist/app.js",
+    "start": "node ./dist/app.js",
     "test": "jest --verbose --coverage"
   },
   "keywords": [],
