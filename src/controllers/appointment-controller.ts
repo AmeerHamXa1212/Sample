@@ -1,10 +1,28 @@
 import express, { Request, Response, NextFunction } from "express";
 import asyncHandler from "express-async-handler";
 import mongoose from "mongoose";
-import { IAppointments } from "../models/appointment";
+import { IAppointments, EPaymentType } from "../models/appointment";
 import AppointmentModel from "../models/appointment";
 import { IPatient } from "../models/patient";
 import PatientModel from "../models/patient";
+import Joi from "joi";
+
+const generateErrorResponse = (statusCode: number, message: string) => {
+  return { statusCode, message };
+};
+
+// Define the Joi schema for appointment data validation
+const appointmentSchema = Joi.object({
+  startTime: Joi.date().required(),
+  endTime: Joi.date().required(),
+  description: Joi.string().min(10).max(150).required(),
+  paymentMethod: Joi.string()
+    .valid(...Object.values(EPaymentType))
+    .required(),
+  patientId: Joi.string().optional(),
+  isPaid: Joi.boolean().required(),
+  paymentAmount: Joi.number().positive().required(),
+});
 
 export const getAllAppointmentForPatient = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -63,7 +81,11 @@ export const deleteAppointment = asyncHandler(
 
 export const addAppointmentToPatient = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { patientId, ...appointmentData } = req.body;
+    const { error, value } = appointmentSchema.validate(req.body);
+    if (error) {
+      return next(generateErrorResponse(400, error.details[0].message));
+    }
+    const { patientId, ...appointmentData } = value;
 
     if (!mongoose.Types.ObjectId.isValid(patientId)) {
       return next({ statusCode: 400, message: "Invalid Patient ID format" });

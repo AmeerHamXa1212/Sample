@@ -6,14 +6,31 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAppointmentFinancials = exports.getAllAppointment = exports.getPopularPatient = exports.getRemainingBill = exports.getAppointmentsforDate = exports.getUnpaidAppointments = exports.addAppointmentToPatient = exports.deleteAppointment = exports.updateAppointment = exports.getAllAppointmentForPatient = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const mongoose_1 = __importDefault(require("mongoose"));
-const appointment_1 = __importDefault(require("../models/appointment"));
+const appointment_1 = require("../models/appointment");
+const appointment_2 = __importDefault(require("../models/appointment"));
 const patient_1 = __importDefault(require("../models/patient"));
+const joi_1 = __importDefault(require("joi"));
+const generateErrorResponse = (statusCode, message) => {
+    return { statusCode, message };
+};
+// Define the Joi schema for appointment data validation
+const appointmentSchema = joi_1.default.object({
+    startTime: joi_1.default.date().required(),
+    endTime: joi_1.default.date().required(),
+    description: joi_1.default.string().min(10).max(150).required(),
+    paymentMethod: joi_1.default.string()
+        .valid(...Object.values(appointment_1.EPaymentType))
+        .required(),
+    patientId: joi_1.default.string().optional(),
+    isPaid: joi_1.default.boolean().required(),
+    paymentAmount: joi_1.default.number().positive().required(),
+});
 exports.getAllAppointmentForPatient = (0, express_async_handler_1.default)(async (req, res, next) => {
     const { patId } = req.params;
     if (!mongoose_1.default.Types.ObjectId.isValid(patId)) {
         return next({ statusCode: 400, message: "Invalid Patient ID format" });
     }
-    const appointments = await appointment_1.default.find({
+    const appointments = await appointment_2.default.find({
         patientId: patId,
     }).populate("patientId");
     if (!appointments || appointments.length === 0) {
@@ -29,7 +46,7 @@ exports.updateAppointment = (0, express_async_handler_1.default)(async (req, res
             message: "Invalid Appointment ID format",
         });
     }
-    const updatedPost = await appointment_1.default.findByIdAndUpdate(appointId, req.body, { new: true }).populate("patientId");
+    const updatedPost = await appointment_2.default.findByIdAndUpdate(appointId, req.body, { new: true }).populate("patientId");
     if (!updatedPost) {
         return next({ statusCode: 404, message: "Appointment not found" });
     }
@@ -43,14 +60,18 @@ exports.deleteAppointment = (0, express_async_handler_1.default)(async (req, res
             message: "Invalid Appointment ID format",
         });
     }
-    const deletedPost = await appointment_1.default.findByIdAndDelete(appointId).populate("patientId");
+    const deletedPost = await appointment_2.default.findByIdAndDelete(appointId).populate("patientId");
     if (!deletedPost) {
         return next({ statusCode: 404, message: "Appointment not found" });
     }
     res.status(200).json({ message: "Appointment deleted successfully" });
 });
 exports.addAppointmentToPatient = (0, express_async_handler_1.default)(async (req, res, next) => {
-    const { patientId, ...appointmentData } = req.body;
+    const { error, value } = appointmentSchema.validate(req.body);
+    if (error) {
+        return next(generateErrorResponse(400, error.details[0].message));
+    }
+    const { patientId, ...appointmentData } = value;
     if (!mongoose_1.default.Types.ObjectId.isValid(patientId)) {
         return next({ statusCode: 400, message: "Invalid Patient ID format" });
     }
@@ -58,7 +79,7 @@ exports.addAppointmentToPatient = (0, express_async_handler_1.default)(async (re
     if (!existingPatient) {
         return next({ statusCode: 404, message: "Patient not found" });
     }
-    const newAppointment = new appointment_1.default({
+    const newAppointment = new appointment_2.default({
         ...appointmentData,
         patientId: existingPatient._id,
     });
@@ -69,7 +90,7 @@ exports.addAppointmentToPatient = (0, express_async_handler_1.default)(async (re
     res.status(201).json(savedAppointment);
 });
 exports.getUnpaidAppointments = (0, express_async_handler_1.default)(async (req, res, next) => {
-    const unpaidAppointments = await appointment_1.default.find({ isPaid: false });
+    const unpaidAppointments = await appointment_2.default.find({ isPaid: false });
     if (unpaidAppointments.length === 0) {
         return next({ statusCode: 404, message: "No Unpaid Appointment" });
     }
@@ -80,7 +101,7 @@ exports.getAppointmentsforDate = (0, express_async_handler_1.default)(async (req
     const startOfDay = new Date(requestedDate.getFullYear(), requestedDate.getMonth(), requestedDate.getDate());
     const endOfDay = new Date(startOfDay);
     endOfDay.setHours(23, 59, 59, 999); // function to mark end of day
-    const appointments = await appointment_1.default.find({
+    const appointments = await appointment_2.default.find({
         startTime: { $gte: startOfDay, $lte: endOfDay },
     });
     if (appointments.length === 0) {
@@ -92,7 +113,7 @@ exports.getAppointmentsforDate = (0, express_async_handler_1.default)(async (req
     res.status(200).json(appointments);
 });
 exports.getRemainingBill = (0, express_async_handler_1.default)(async (req, res, next) => {
-    const unpaidSum = await appointment_1.default.aggregate([
+    const unpaidSum = await appointment_2.default.aggregate([
         { $match: { isPaid: false } },
         { $group: { _id: null, total: { $sum: "$paymentAmount" } } },
     ]);
@@ -105,7 +126,7 @@ exports.getRemainingBill = (0, express_async_handler_1.default)(async (req, res,
     res.status(200).json(`Total Remaining Bill ${unpaidSum[0].total}`);
 });
 exports.getPopularPatient = (0, express_async_handler_1.default)(async (req, res, next) => {
-    const popularPatient = await appointment_1.default.aggregate([
+    const popularPatient = await appointment_2.default.aggregate([
         { $match: { isPaid: true } },
         {
             $group: {
@@ -135,14 +156,14 @@ exports.getPopularPatient = (0, express_async_handler_1.default)(async (req, res
     });
 });
 exports.getAllAppointment = (0, express_async_handler_1.default)(async (req, res, next) => {
-    const appointments = await appointment_1.default.find();
+    const appointments = await appointment_2.default.find();
     if (appointments.length === 0) {
         return next({ statusCode: 404, message: "No Appointment Available" });
     }
     res.status(200).json(appointments);
 });
 exports.getAppointmentFinancials = (0, express_async_handler_1.default)(async (req, res, next) => {
-    const result = await appointment_1.default.aggregate([
+    const result = await appointment_2.default.aggregate([
         {
             $group: {
                 _id: {

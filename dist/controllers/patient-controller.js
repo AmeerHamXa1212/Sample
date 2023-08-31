@@ -5,8 +5,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deletePatient = exports.updatePatient = exports.createPatient = exports.getAllPatient = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
-const patient_1 = __importDefault(require("../models/patient"));
+const patient_1 = require("../models/patient");
+const patient_2 = __importDefault(require("../models/patient"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const joi_1 = __importDefault(require("joi"));
+const patientSchema = joi_1.default.object({
+    petName: joi_1.default.string().min(4).max(10).required(),
+    petType: joi_1.default.string()
+        .valid(...Object.values(patient_1.EPetType))
+        .required(),
+    ownerName: joi_1.default.string().required(),
+    ownerAddress: joi_1.default.string().required(),
+    ownerPhone: joi_1.default.string().required(),
+});
 const generateErrorResponse = (statusCode, message) => {
     return { statusCode, message };
 };
@@ -16,19 +27,16 @@ const checkNullAndEmpty = (value, errorMessage) => {
     }
 };
 exports.getAllPatient = (0, express_async_handler_1.default)(async (req, res, next) => {
-    const patients = await patient_1.default.find();
+    const patients = await patient_2.default.find();
     checkNullAndEmpty(patients, "No Patient in DB");
     res.status(200).json(patients);
 });
 exports.createPatient = (0, express_async_handler_1.default)(async (req, res, next) => {
-    const newPatient = await patient_1.default.create(req.body);
-    if (!newPatient.petName ||
-        !newPatient.ownerName ||
-        !newPatient.ownerPhone ||
-        !newPatient.ownerAddress ||
-        !newPatient.petType) {
-        return next(generateErrorResponse(400, "Bad Request"));
+    const { error, value } = patientSchema.validate(req.body);
+    if (error) {
+        return next(generateErrorResponse(400, error.details[0].message));
     }
+    const newPatient = await patient_2.default.create(value);
     res.status(201).send(newPatient);
 });
 exports.updatePatient = (0, express_async_handler_1.default)(async (req, res, next) => {
@@ -36,7 +44,11 @@ exports.updatePatient = (0, express_async_handler_1.default)(async (req, res, ne
     if (!mongoose_1.default.Types.ObjectId.isValid(patientId)) {
         return next(generateErrorResponse(400, "Invalid ObjectId format"));
     }
-    const updatedPatient = await patient_1.default.findByIdAndUpdate(patientId, { $set: req.body }, { new: true });
+    const { error, value } = patientSchema.validate(req.body);
+    if (error) {
+        return next(generateErrorResponse(400, error.details[0].message));
+    }
+    const updatedPatient = await patient_2.default.findByIdAndUpdate(patientId, { $set: req.body }, { new: true });
     checkNullAndEmpty(updatedPatient, "Patient not found");
     res.status(200).json(updatedPatient);
 });
@@ -45,7 +57,7 @@ exports.deletePatient = (0, express_async_handler_1.default)(async (req, res, ne
     if (!mongoose_1.default.Types.ObjectId.isValid(patientId)) {
         return next(generateErrorResponse(400, "Invalid ObjectId format"));
     }
-    const deletedPatient = await patient_1.default.findByIdAndDelete(req.params.patientId);
+    const deletedPatient = await patient_2.default.findByIdAndDelete(req.params.patientId);
     checkNullAndEmpty(deletedPatient, "Patient not found");
     res.status(200).json({ message: "Patient deleted successfully" });
 });

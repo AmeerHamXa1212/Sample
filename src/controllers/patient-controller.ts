@@ -1,8 +1,20 @@
 import { Request, Response, NextFunction } from "express";
 import asyncHandler from "express-async-handler";
-import { IPatient } from "../models/patient";
+import { IPatient, EPetType } from "../models/patient";
 import PatientModel from "../models/patient";
 import mongoose from "mongoose";
+
+import Joi from "joi";
+
+const patientSchema = Joi.object({
+  petName: Joi.string().min(4).max(10).required(),
+  petType: Joi.string()
+    .valid(...Object.values(EPetType))
+    .required(),
+  ownerName: Joi.string().required(),
+  ownerAddress: Joi.string().required(),
+  ownerPhone: Joi.string().required(),
+});
 
 const generateErrorResponse = (statusCode: number, message: string) => {
   return { statusCode, message };
@@ -25,16 +37,11 @@ export const getAllPatient = asyncHandler(
 
 export const createPatient = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const newPatient = await PatientModel.create(req.body);
-    if (
-      !newPatient.petName ||
-      !newPatient.ownerName ||
-      !newPatient.ownerPhone ||
-      !newPatient.ownerAddress ||
-      !newPatient.petType
-    ) {
-      return next(generateErrorResponse(400, "Bad Request"));
+    const { error, value } = patientSchema.validate(req.body);
+    if (error) {
+      return next(generateErrorResponse(400, error.details[0].message));
     }
+    const newPatient = await PatientModel.create(value);
     res.status(201).send(newPatient);
   }
 );
@@ -45,6 +52,10 @@ export const updatePatient = asyncHandler(
 
     if (!mongoose.Types.ObjectId.isValid(patientId)) {
       return next(generateErrorResponse(400, "Invalid ObjectId format"));
+    }
+    const { error, value } = patientSchema.validate(req.body);
+    if (error) {
+      return next(generateErrorResponse(400, error.details[0].message));
     }
 
     const updatedPatient = await PatientModel.findByIdAndUpdate(
