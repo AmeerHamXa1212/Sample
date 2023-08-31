@@ -67,11 +67,7 @@ exports.deleteAppointment = (0, express_async_handler_1.default)(async (req, res
     res.status(200).json({ message: "Appointment deleted successfully" });
 });
 exports.addAppointmentToPatient = (0, express_async_handler_1.default)(async (req, res, next) => {
-    const { error, value } = appointmentSchema.validate(req.body);
-    if (error) {
-        return next(generateErrorResponse(400, error.details[0].message));
-    }
-    const { patientId, ...appointmentData } = value;
+    const { patientId, ...appointmentData } = req.body;
     if (!mongoose_1.default.Types.ObjectId.isValid(patientId)) {
         return next({ statusCode: 400, message: "Invalid Patient ID format" });
     }

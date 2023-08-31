@@ -32,21 +32,20 @@ exports.getAllPatient = (0, express_async_handler_1.default)(async (req, res, ne
     res.status(200).json(patients);
 });
 exports.createPatient = (0, express_async_handler_1.default)(async (req, res, next) => {
-    const { error, value } = patientSchema.validate(req.body);
-    if (error) {
-        return next(generateErrorResponse(400, error.details[0].message));
+    const newPatient = await patient_2.default.create(req.body);
+    if (!newPatient.petName ||
+        !newPatient.ownerName ||
+        !newPatient.ownerPhone ||
+        !newPatient.ownerAddress ||
+        !newPatient.petType) {
+        return next(generateErrorResponse(400, "Bad Request"));
     }
-    const newPatient = await patient_2.default.create(value);
     res.status(201).send(newPatient);
 });
 exports.updatePatient = (0, express_async_handler_1.default)(async (req, res, next) => {
     const patientId = req.params.patientId;
     if (!mongoose_1.default.Types.ObjectId.isValid(patientId)) {
         return next(generateErrorResponse(400, "Invalid ObjectId format"));
-    }
-    const { error, value } = patientSchema.validate(req.body);
-    if (error) {
-        return next(generateErrorResponse(400, error.details[0].message));
     }
     const updatedPatient = await patient_2.default.findByIdAndUpdate(patientId, { $set: req.body }, { new: true });
     checkNullAndEmpty(updatedPatient, "Patient not found");

@@ -37,11 +37,16 @@ export const getAllPatient = asyncHandler(
 
 export const createPatient = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { error, value } = patientSchema.validate(req.body);
-    if (error) {
-      return next(generateErrorResponse(400, error.details[0].message));
+    const newPatient = await PatientModel.create(req.body);
+    if (
+      !newPatient.petName ||
+      !newPatient.ownerName ||
+      !newPatient.ownerPhone ||
+      !newPatient.ownerAddress ||
+      !newPatient.petType
+    ) {
+      return next(generateErrorResponse(400, "Bad Request"));
     }
-    const newPatient = await PatientModel.create(value);
     res.status(201).send(newPatient);
   }
 );
@@ -52,10 +57,6 @@ export const updatePatient = asyncHandler(
 
     if (!mongoose.Types.ObjectId.isValid(patientId)) {
       return next(generateErrorResponse(400, "Invalid ObjectId format"));
-    }
-    const { error, value } = patientSchema.validate(req.body);
-    if (error) {
-      return next(generateErrorResponse(400, error.details[0].message));
     }
 
     const updatedPatient = await PatientModel.findByIdAndUpdate(
